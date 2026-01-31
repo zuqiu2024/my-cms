@@ -3,277 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>博客后台 | Decap CMS</title>
-    
-    <!-- 使用稳定的 2.x 版本（更稳定） -->
+    <title>博客后台管理</title>
     <script src="https://cdn.jsdelivr.net/npm/decap-cms@2.15.0/dist/decap-cms.js"></script>
-    
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #fafafa;
-        }
-        
-        #nc-root {
-            position: relative;
-            min-height: 100vh;
-            z-index: 1;
-        }
-        
-        /* 加载遮罩 - 使用固定定位，避免干扰DOM */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: white;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.3s ease;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: white;
-            z-index: 10000;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .error-content {
-            max-width: 500px;
-            text-align: center;
-            background: #ffebee;
-            border-radius: 8px;
-            padding: 30px;
-            border: 1px solid #ffcdd2;
-        }
-        
-        .retry-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+        body, html { margin:0; padding:0; height:100%; }
+        #nc-root { height:100vh; }
     </style>
 </head>
 <body>
-    <!-- 使用固定定位的加载层，不干扰CMS的DOM -->
-    <div id="loading" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <h2 style="color: #333; margin-bottom: 10px;">正在加载内容管理系统</h2>
-        <p style="color: #666;">请稍候...</p>
-    </div>
-    
-    <!-- 错误显示层，也使用固定定位 -->
-    <div id="error" class="error-overlay">
-        <div class="error-content">
-            <h3 style="color: #d32f2f; margin-top: 0;">加载失败</h3>
-            <p id="error-message"></p>
-            <button class="retry-btn" onclick="window.location.reload()">重新加载</button>
-            <p style="margin-top: 20px; font-size: 14px; color: #666;">
-                如果多次重试仍然失败，请检查网络连接或联系管理员。
-            </p>
-        </div>
-    </div>
-    
-    <!-- CMS容器 - 完全独立，不添加任何内容 -->
     <div id="nc-root"></div>
     
     <script>
-        // 确保只执行一次初始化
-        let cmsInitialized = false;
-        let initializationAttempted = false;
-        
-        function showError(message) {
-            console.error('CMS Error:', message);
-            
-            // 隐藏加载层
-            const loading = document.getElementById('loading');
-            if (loading) {
-                loading.style.opacity = '0';
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                }, 300);
-            }
-            
-            // 显示错误层
-            const error = document.getElementById('error');
-            const errorMsg = document.getElementById('error-message');
-            if (error && errorMsg) {
-                errorMsg.textContent = message;
-                error.style.display = 'flex';
-            }
-        }
-        
-        function hideLoader() {
-            // 淡出加载层
-            const loading = document.getElementById('loading');
-            if (loading) {
-                loading.style.opacity = '0';
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                }, 500);
-            }
-        }
-        
-        // 安全初始化函数
-        function initCMS() {
-            // 防止重复初始化
-            if (initializationAttempted) {
-                return;
-            }
-            initializationAttempted = true;
-            
-            console.log('开始初始化Decap CMS...');
-            
-            // 等待一小段时间确保DOM完全就绪
-            setTimeout(() => {
-                try {
-                    // 检查CMS库是否加载
-                    if (typeof CMS === 'undefined') {
-                        showError('CMS库加载失败，请刷新页面重试。');
-                        return;
-                    }
-                    
-                    // 检查是否已经初始化
-                    if (cmsInitialized) {
-                        console.log('CMS已经初始化过，跳过重复初始化。');
-                        return;
-                    }
-                    
-                    console.log('正在初始化CMS...');
-                    
-                    // 重要：确保nc-root容器是空的
-                    const ncRoot = document.getElementById('nc-root');
-                    if (ncRoot) {
-                        // 清除可能存在的任何子节点
-                        while (ncRoot.firstChild) {
-                            ncRoot.removeChild(ncRoot.firstChild);
-                        }
-                    }
-                    
-                    // 初始化CMS - 这是最关键的一步
-                    CMS.init();
-                    
-                    console.log('CMS初始化成功！');
-                    cmsInitialized = true;
-                    
-                    // 延迟隐藏加载层，确保CMS完全渲染
-                    setTimeout(hideLoader, 1500);
-                    
-                } catch (error) {
-                    console.error('初始化过程中出错:', error);
-                    showError('CMS初始化失败: ' + error.message);
-                }
-            }, 100); // 短暂延迟确保DOM稳定
-        }
-        
-        // 启动策略
+        // 绝对最小化初始化
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM已加载，准备初始化CMS');
-            
-            // 如果CMS库已经加载完成，立即初始化
-            if (typeof CMS !== 'undefined') {
-                console.log('CMS库已就绪，立即初始化');
-                initCMS();
-            } else {
-                // 否则等待库加载
-                console.log('等待CMS库加载...');
-                
-                // 设置库加载超时
-                const loadTimeout = setTimeout(function() {
-                    if (typeof CMS === 'undefined') {
-                        showError('CMS库加载超时，请检查网络连接。');
+            setTimeout(function() {
+                if (typeof CMS !== 'undefined') {
+                    try {
+                        CMS.init();
+                    } catch(e) {
+                        console.error('CMS初始化错误:', e);
+                        document.body.innerHTML = '<div style="padding:20px;font-family:sans-serif;">' +
+                            '<h2>CMS加载失败</h2><p>错误: ' + e.message + '</p>' +
+                            '<button onclick="location.reload()">重新加载</button></div>';
                     }
-                }, 15000);
-                
-                // 监听window.load事件
-                window.addEventListener('load', function() {
-                    clearTimeout(loadTimeout);
-                    
-                    if (typeof CMS !== 'undefined') {
-                        initCMS();
-                    } else {
-                        showError('CMS库未能加载，请刷新页面或检查CDN可用性。');
-                    }
-                });
-                
-                // 添加一个备用检测，每500ms检查一次CMS是否加载
-                const checkInterval = setInterval(function() {
-                    if (typeof CMS !== 'undefined') {
-                        clearInterval(checkInterval);
-                        clearTimeout(loadTimeout);
-                        initCMS();
-                    }
-                }, 500);
-            }
-        });
-        
-        // 全局错误捕获
-        window.addEventListener('error', function(event) {
-            // 过滤掉特定错误，避免影响用户体验
-            if (event.message && event.message.includes('removeChild')) {
-                console.warn('检测到DOM操作冲突，尝试恢复...');
-                // 不显示错误，尝试继续运行
-                event.preventDefault();
-                return false;
-            }
-            
-            // 如果是脚本加载错误
-            if (event.target && event.target.tagName === 'SCRIPT') {
-                showError('脚本加载失败，请刷新页面重试。');
-            }
-        });
-        
-        // 处理React错误边界（如果CMS使用React）
-        window.addEventListener('unhandledrejection', function(event) {
-            console.error('未处理的Promise拒绝:', event.reason);
-            
-            // 特定错误处理
-            if (event.reason && event.reason.message && 
-                event.reason.message.includes('removeChild')) {
-                console.warn('React DOM操作冲突，CMS可能仍在运行中...');
-                // 不显示错误给用户
-                event.preventDefault();
-            }
+                } else {
+                    document.body.innerHTML = '<div style="padding:20px;font-family:sans-serif;">' +
+                        '<h2>CMS库加载失败</h2><p>请刷新页面或检查网络</p>' +
+                        '<button onclick="location.reload()">刷新页面</button></div>';
+                }
+            }, 100);
         });
     </script>
 </body>
