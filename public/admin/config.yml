@@ -1,0 +1,24 @@
+backend:
+  name: github
+  repo: zuqiu2024/zxx  # 你的主博客仓库
+  branch: master
+  base_url: https://[你的新CMS域名]  # 重要！部署后需更新
+  auth_endpoint: /api/auth
+
+media_folder: "public/images"
+public_folder: "/images"
+
+collections:
+  - name: "posts"
+    label: "文章"
+    folder: "src/content/posts"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "发布日期", name: "published", widget: "datetime", format: "YYYY-MM-DD" }
+      - { label: "描述", name: "description", widget: "text" }
+      - { label: "标签", name: "tags", widget: "list" }
+      - { label: "封面图片", name: "image", widget: "string" }
+      - { label: "作者", name: "author", widget: "string", default: "展" }
+      - { label: "正文", name: "body", widget: "markdown" }
