@@ -4,11 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>博客内容管理</title>
-    <script src="<script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- 主CDN：jsdelivr -->
+    <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- 备用CDN（防止主CDN加载失败） -->
+    <script>
+        // 备用方案：如果主CDN加载失败，尝试从另一个CDN加载
+        window.CMS_LOADED = false;
+        setTimeout(function() {
+            if (!window.CMS_LOADED && typeof CMS === 'undefined') {
+                console.log('主CDN加载失败，尝试备用CDN...');
+                var backupScript = document.createElement('script');
+                backupScript.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+                backupScript.onload = function() {
+                    initCMS();
+                };
+                document.head.appendChild(backupScript);
+            }
+        }, 3000); // 3秒后检查
+    </script>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
         .header { text-align: center; margin-bottom: 30px; }
         .info { background: white; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 600px; }
+        #status { 
+            color: #d32f2f; 
+            background: #ffebee; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin-top: 15px;
+            display: none;
+        }
+        #cms-root {
+            min-height: 400px; /* 为CMS界面预留空间 */
+        }
     </style>
 </head>
 <body>
@@ -19,12 +47,47 @@
     <div class="info">
         <p><strong>目标仓库:</strong> <code>zuqiu2024/zxx</code> (master分支)</p>
         <p><strong>文章目录:</strong> <code>src/content/posts</code></p>
-        <p>首次使用请点击下方登录按钮，完成 GitHub 授权。</p>
+        <p id="loginPrompt">首次使用请点击下方登录按钮，完成 GitHub 授权。</p>
+        <div id="status"></div>
     </div>
+    
+    <!-- Decap CMS 将在此处渲染 -->
+    <div id="cms-root"></div>
+
     <script>
-        if (typeof CMS !== 'undefined') {
-            CMS.init();
-            console.log('CMS 已初始化');
+        function showStatus(msg, isError) {
+            var statusEl = document.getElementById('status');
+            statusEl.innerHTML = msg;
+            statusEl.style.display = 'block';
+            statusEl.style.color = isError ? '#d32f2f' : '#388e3c';
+            console.log(isError ? '错误: ' + msg : '状态: ' + msg);
+        }
+
+        function initCMS() {
+            if (typeof CMS === 'undefined') {
+                showStatus('❌ CMS 核心库加载失败。可能原因：1. 网络问题；2. CDN不可访问；3. 请尝试刷新页面或切换网络。', true);
+                return;
+            }
+            
+            window.CMS_LOADED = true;
+            showStatus('✅ CMS 库加载成功，正在初始化界面...', false);
+            
+            try {
+                // 初始化 Decap CMS
+                CMS.init();
+                console.log('CMS 已初始化');
+                document.getElementById('loginPrompt').innerHTML = '请使用上方出现的登录按钮进行操作。';
+                document.getElementById('status').style.display = 'none'; // 成功后隐藏状态提示
+            } catch (err) {
+                showStatus('❌ CMS 初始化失败: ' + err.message, true);
+            }
+        }
+
+        // 页面加载后尝试初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCMS);
+        } else {
+            initCMS();
         }
     </script>
 </body>
