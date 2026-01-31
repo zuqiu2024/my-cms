@@ -14,7 +14,7 @@ export async function POST({ request }) {
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
         code,
-        redirect_uri: 'https://[你的新CMS域名]/api/auth' // 重要！部署后需更新
+        redirect_uri: 'https://zhanxx1.de5.net/api/auth' // 重要！部署后需更新
       }),
     });
 
