@@ -4,34 +4,178 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>博客后台管理</title>
-    <script src="https://cdn.jsdelivr.net/npm/decap-cms@2.15.0/dist/decap-cms.js"></script>
     <style>
-        body, html { margin:0; padding:0; height:100%; }
-        #nc-root { height:100vh; }
+        /* 内联CSS样式，避免额外文件 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10000;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        #nc-root {
+            min-height: 100vh;
+        }
+        
+        .retry-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h2>正在加载内容管理系统</h2>
+        <p>请稍候...</p>
+    </div>
+    
+    <div class="error" id="error">
+        <h3 id="error-title">加载失败</h3>
+        <p id="error-msg"></p>
+        <button class="retry-btn" onclick="location.reload()">重新加载</button>
+    </div>
+    
     <div id="nc-root"></div>
     
+    <!-- 直接从jsdelivr加载（如果网络好） -->
+    <script src="https://cdn.jsdelivr.net/npm/decap-cms@2.15.0/dist/decap-cms.js"></script>
+    
     <script>
-        // 绝对最小化初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                if (typeof CMS !== 'undefined') {
-                    try {
-                        CMS.init();
-                    } catch(e) {
-                        console.error('CMS初始化错误:', e);
-                        document.body.innerHTML = '<div style="padding:20px;font-family:sans-serif;">' +
-                            '<h2>CMS加载失败</h2><p>错误: ' + e.message + '</p>' +
-                            '<button onclick="location.reload()">重新加载</button></div>';
-                    }
-                } else {
-                    document.body.innerHTML = '<div style="padding:20px;font-family:sans-serif;">' +
-                        '<h2>CMS库加载失败</h2><p>请刷新页面或检查网络</p>' +
-                        '<button onclick="location.reload()">刷新页面</button></div>';
+        // 显示错误
+        function showError(title, message) {
+            console.error(title, message);
+            
+            var loading = document.getElementById('loading');
+            var error = document.getElementById('error');
+            var errorTitle = document.getElementById('error-title');
+            var errorMsg = document.getElementById('error-msg');
+            
+            if (loading) loading.style.display = 'none';
+            if (error && errorTitle && errorMsg) {
+                errorTitle.textContent = title;
+                errorMsg.textContent = message;
+                error.style.display = 'block';
+            }
+        }
+        
+        // 隐藏加载界面
+        function hideLoading() {
+            var loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.opacity = '0';
+                loading.style.transition = 'opacity 0.5s';
+                setTimeout(function() {
+                    loading.style.display = 'none';
+                }, 500);
+            }
+        }
+        
+        // 初始化CMS
+        function initCMS() {
+            try {
+                if (typeof CMS === 'undefined') {
+                    showError('CMS库未加载', '请检查网络连接后刷新页面');
+                    return;
                 }
-            }, 100);
+                
+                console.log('正在初始化CMS...');
+                CMS.init();
+                console.log('CMS初始化成功');
+                
+                // 延迟隐藏加载界面
+                setTimeout(hideLoading, 1000);
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                showError('初始化失败', error.message || '未知错误');
+            }
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM加载完成');
+            
+            // 如果CMS已经加载完成
+            if (typeof CMS !== 'undefined') {
+                console.log('CMS库已加载，开始初始化');
+                initCMS();
+            } else {
+                console.log('等待CMS库加载...');
+                
+                // 设置加载超时（15秒）
+                var loadTimeout = setTimeout(function() {
+                    if (typeof CMS === 'undefined') {
+                        showError('加载超时', 'CMS库加载时间过长，请检查网络连接');
+                    }
+                }, 15000);
+                
+                // 监听window.load事件
+                window.addEventListener('load', function() {
+                    clearTimeout(loadTimeout);
+                    
+                    if (typeof CMS !== 'undefined') {
+                        initCMS();
+                    } else {
+                        showError('库加载失败', '无法加载CMS库，请刷新页面重试');
+                    }
+                });
+                
+                // 备用：每500ms检查一次
+                var checkInterval = setInterval(function() {
+                    if (typeof CMS !== 'undefined') {
+                        clearInterval(checkInterval);
+                        clearTimeout(loadTimeout);
+                        initCMS();
+                    }
+                }, 500);
+            }
         });
     </script>
 </body>
