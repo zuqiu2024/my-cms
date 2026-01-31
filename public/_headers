@@ -1,0 +1,9 @@
+# Cloudflare Pages Headers配置
+/admin/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  
+/admin/index.html
+  Cache-Control: public, max-age=3600
