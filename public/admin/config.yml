@@ -2,7 +2,7 @@ backend:
   name: github
   repo: zuqiu2024/zxx  # 你的主博客仓库
   branch: master
-  base_url: https://[你的新CMS域名]  # 重要！部署后需更新
+  base_url: https://zhanxx1.de5.net  # 重要！部署后需更新
   auth_endpoint: /api/auth
 
 media_folder: "public/images"
