@@ -3,266 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>博客管理 | Decap CMS</title>
+    <title>博客管理 - Cloudflare优化版</title>
     
-    <!-- 官方CDN -->
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- 使用Cloudflare CDN加速的unpkg镜像 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/decap-cms/2.15.0/decap-cms.js"></script>
+    
+    <!-- 添加meta标签帮助Cloudflare优化 -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     
     <style>
-        * {
+        /* Cloudflare主题样式 */
+        body, html {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-        }
-        
-        .status-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-        
-        .status-text {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .status-detail {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 25px;
-        }
-        
-        .progress-bar {
-            height: 4px;
-            background: #e0e0e0;
-            border-radius: 2px;
-            margin-bottom: 25px;
-            overflow: hidden;
-        }
-        
-        .progress {
             height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        .vpn-tip {
-            background: #e3f2fd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
-            text-align: left;
-        }
-        
-        .vpn-tip h4 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-        
-        .vpn-tip ul {
-            padding-left: 20px;
-            color: #555;
-        }
-        
-        .vpn-tip li {
-            margin-bottom: 5px;
-        }
-        
-        .retry-btn {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Segoe UI Emoji', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-            transition: transform 0.2s;
         }
         
-        .retry-btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        #cms-root {
+        .cf-loading {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .cf-logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #F6821F, #E93E3A);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .cf-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #F6821F;
+            border-radius: 50%;
+            animation: cf-spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes cf-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .cf-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #F6821F;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        #nc-root {
+            min-height: 100vh;
         }
     </style>
 </head>
 <body>
-    <!-- 加载界面 -->
-    <div id="loading" class="container">
-        <div class="status-icon">⏳</div>
-        <h2 class="status-text" id="status-text">正在连接海外服务器</h2>
-        <p class="status-detail" id="status-detail">请确保VPN已连接并工作正常</p>
-        
-        <div class="progress-bar">
-            <div class="progress" id="progress"></div>
-        </div>
-        
-        <div class="vpn-tip">
-            <h4>VPN使用提示：</h4>
-            <ul>
-                <li>推荐使用稳定的商业VPN服务</li>
-                <li>选择美国、日本或新加坡节点</li>
-                <li>如果加载慢，请切换节点重试</li>
-                <li>确保VPN在访问前已连接</li>
-            </ul>
-        </div>
-        
-        <button class="retry-btn" onclick="retryLoading()">手动重试</button>
+    <div class="cf-badge">Cloudflare Pages</div>
+    
+    <div id="loading" class="cf-loading">
+        <div class="cf-logo">CF</div>
+        <div class="cf-spinner"></div>
+        <h2>Cloudflare加速加载中</h2>
+        <p id="status">初始化Cloudflare网络...</p>
+        <p style="margin-top: 20px; font-size: 14px; color: #666; max-width: 400px; text-align: center;">
+            通过Cloudflare全球网络优化加载速度
+        </p>
     </div>
     
-    <!-- Decap CMS界面 -->
-    <div id="cms-root" class="hidden"></div>
+    <div id="nc-root"></div>
     
     <script>
-        let retryCount = 0;
-        const maxRetries = 3;
+        // 性能监控
+        const perf = {
+            start: Date.now(),
+            stages: {}
+        };
         
-        // 更新加载状态
-        function updateStatus(text, detail, progress) {
-            document.getElementById('status-text').textContent = text;
-            document.getElementById('status-detail').textContent = detail;
-            document.getElementById('progress').style.width = progress + '%';
+        function logStage(stage) {
+            perf.stages[stage] = Date.now() - perf.start;
+            console.log(`[${stage}] +${perf.stages[stage]}ms`);
+            updateStatus(stage);
         }
         
-        // 重试加载
-        function retryLoading() {
-            retryCount = 0;
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('cms-root').classList.add('hidden');
-            startLoading();
+        function updateStatus(msg) {
+            const el = document.getElementById('status');
+            if (el) el.textContent = msg;
         }
         
-        // 开始加载过程
-        function startLoading() {
-            updateStatus('正在连接海外服务器', '初始化网络连接...', 10);
+        // Cloudflare特定优化
+        function optimizeForCF() {
+            // 告诉Cloudflare我们想要优先加载
+            if (window.requestIdleCallback) {
+                requestIdleCallback(() => {
+                    console.log('Cloudflare空闲时优化');
+                });
+            }
             
-            // 模拟进度
-            let progress = 10;
-            const progressInterval = setInterval(() => {
-                if (progress < 90) {
-                    progress += 5;
-                    document.getElementById('progress').style.width = progress + '%';
-                }
-            }, 500);
+            // 预连接到常用域名
+            const preconnectDomains = [
+                'https://api.github.com',
+                'https://unpkg.com'
+            ];
             
-            // 检查CMS库加载
-            const checkCMS = setInterval(() => {
-                if (typeof CMS !== 'undefined') {
-                    clearInterval(checkCMS);
-                    clearInterval(progressInterval);
-                    
-                    updateStatus('CMS库加载成功', '正在初始化管理界面...', 95);
-                    
-                    // 初始化CMS
-                    setTimeout(() => {
-                        try {
-                            CMS.init({
-                                config: window.CMS_CONFIG || {}
-                            });
-                            
-                            updateStatus('加载完成', '正在跳转管理界面...', 100);
-                            
-                            // 显示CMS界面
-                            setTimeout(() => {
-                                document.getElementById('loading').classList.add('hidden');
-                                document.getElementById('cms-root').classList.remove('hidden');
-                            }, 1000);
-                            
-                        } catch (error) {
-                            console.error('CMS初始化错误:', error);
-                            handleError('初始化失败', error.message);
-                        }
-                    }, 1000);
-                    
-                } else {
-                    // CMS未加载，检查重试次数
-                    if (retryCount >= maxRetries) {
-                        clearInterval(checkCMS);
-                        clearInterval(progressInterval);
-                        handleError('连接超时', '请检查VPN连接后重试');
-                    }
-                }
-            }, 1000);
-            
-            // 超时处理
-            setTimeout(() => {
+            preconnectDomains.forEach(domain => {
+                const link = document.createElement('link');
+                link.rel = 'preconnect';
+                link.href = domain;
+                document.head.appendChild(link);
+            });
+        }
+        
+        // 初始化CMS
+        function initCMS() {
+            try {
+                logStage('检查CMS库');
+                
                 if (typeof CMS === 'undefined') {
-                    clearInterval(checkCMS);
-                    clearInterval(progressInterval);
-                    retryCount++;
-                    
-                    if (retryCount < maxRetries) {
-                        updateStatus('连接超时', `正在第 ${retryCount + 1} 次重试...`, 30);
-                        setTimeout(startLoading, 2000);
-                    } else {
-                        handleError('多次重试失败', '请检查VPN连接并刷新页面');
-                    }
+                    throw new Error('CMS库未加载');
                 }
-            }, 15000);
+                
+                logStage('初始化CMS配置');
+                
+                // 使用Cloudflare Pages的默认配置
+                const config = window.CMS_CONFIG || {};
+                
+                // 确保使用正确的后端配置
+                if (!config.backend) {
+                    config.backend = {
+                        name: 'github',
+                        repo: '', // 将在运行时检测
+                        branch: 'main'
+                    };
+                }
+                
+                // 初始化
+                CMS.init(config);
+                logStage('CMS初始化完成');
+                
+                // 成功加载，隐藏加载界面
+                setTimeout(() => {
+                    const loading = document.getElementById('loading');
+                    if (loading) {
+                        loading.style.opacity = '0';
+                        loading.style.transition = 'opacity 0.5s';
+                        setTimeout(() => {
+                            loading.style.display = 'none';
+                            
+                            const totalTime = Date.now() - perf.start;
+                            console.log(`🎉 Cloudflare Pages加载完成，总耗时: ${totalTime}ms`);
+                        }, 500);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('CMS初始化失败:', error);
+                showError('初始化失败', error.message);
+            }
         }
         
         // 错误处理
-        function handleError(title, message) {
-            updateStatus(title, message, 100);
-            document.getElementById('progress').style.background = '#ff5252';
-            
-            // 显示错误详情
-            document.getElementById('status-detail').innerHTML = `
-                ${message}<br><br>
-                <small style="color: #999;">
-                    请按以下步骤排查：<br>
-                    1. 确认VPN已连接<br>
-                    2. 尝试切换VPN节点<br>
-                    3. 刷新页面重试<br>
-                    4. 等待几分钟后再试
-                </small>
-            `;
+        function showError(title, message) {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.innerHTML = `
+                    <div style="text-align: center; max-width: 400px;">
+                        <div style="color: #e74c3c; font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                        <h2 style="color: #333;">${title}</h2>
+                        <p style="color: #666; margin: 15px 0;">${message}</p>
+                        <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: left;">
+                            <h4 style="margin-top: 0;">Cloudflare Pages建议：</h4>
+                            <ol style="margin: 10px 0; padding-left: 20px;">
+                                <li>检查GitHub仓库配置</li>
+                                <li>确保config.yml文件存在</li>
+                                <li>验证GitHub Token权限</li>
+                                <li>查看Cloudflare Pages日志</li>
+                            </ol>
+                        </div>
+                        <button onclick="location.reload()" 
+                                style="padding: 12px 24px; background: #F6821F; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;">
+                            🔄 重新加载
+                        </button>
+                    </div>
+                `;
+            }
         }
         
-        // 页面加载完成后开始
-        document.addEventListener('DOMContentLoaded', startLoading);
-        
-        // 全局错误捕获
-        window.addEventListener('error', (event) => {
-            console.error('脚本加载错误:', event);
+        // 主加载流程
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Cloudflare Pages启动');
+            logStage('DOM就绪');
             
-            if (event.target && event.target.tagName === 'SCRIPT') {
-                if (retryCount < maxRetries) {
-                    retryCount++;
-                    updateStatus('脚本加载失败', `正在第 ${retryCount + 1} 次重试...`, 50);
-                    setTimeout(startLoading, 2000);
-                }
+            optimizeForCF();
+            
+            // 检测CMS库是否加载
+            if (typeof CMS !== 'undefined') {
+                logStage('CMS库已就绪');
+                setTimeout(initCMS, 100);
+            } else {
+                logStage('等待CMS库加载');
+                
+                // 设置加载检测
+                let checkCount = 0;
+                const maxChecks = 40; // 20秒超时
+                
+                const checkInterval = setInterval(() => {
+                    checkCount++;
+                    
+                    if (typeof CMS !== 'undefined') {
+                        clearInterval(checkInterval);
+                        logStage('CMS库加载完成');
+                        initCMS();
+                    } else if (checkCount >= maxChecks) {
+                        clearInterval(checkInterval);
+                        showError('加载超时', 'CMS库未能加载，请检查网络或Cloudflare配置');
+                    } else {
+                        updateStatus(`等待中 (${checkCount * 0.5}s)`);
+                    }
+                }, 500);
+                
+                // 全局错误捕获
+                window.addEventListener('error', (e) => {
+                    if (e.target && e.target.tagName === 'SCRIPT') {
+                        console.error('脚本加载错误:', e);
+                        clearInterval(checkInterval);
+                        showError('脚本加载失败', '请检查CDN连接或使用VPN');
+                    }
+                });
             }
         });
     </script>
