@@ -1,153 +1,16 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>博客管理后台 - 自检模式</title>
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; }
-        #app { background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 500px; text-align: center; }
-        .status { margin: 20px 0; padding: 15px; border-radius: 8px; }
-        .loading { background: #e3f2fd; color: #1565c0; }
-        .success { background: #e8f5e9; color: #2e7d32; display: none; }
-        .error { background: #ffebee; color: #c62828; display: none; }
-        .detail { font-size: 0.9em; color: #666; margin-top: 10px; text-align: left; background: #fafafa; padding: 10px; border-radius: 5px; font-family: monospace; }
-        button { padding: 10px 20px; margin: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-        #retryBtn { background: #2196f3; color: white; }
-        #diagnoseBtn { background: #ff9800; color: white; }
-    </style>
-</head>
-<body>
-    <div id="app">
-        <h2>🔧 Decap CMS 自检模式</h2>
-        <div id="statusLoad" class="status loading">🔄 第1步：正在加载 Decap CMS 库...</div>
-        <div id="statusInit" class="status loading">⏳ 第2步：准备初始化...</div>
-        <div id="statusSuccess" class="status success">✅ 初始化成功！CMS界面应已加载。</div>
-        <div id="statusError" class="status error">❌ 加载失败。</div>
+backend:
+  name: github
+  repo: zuqiu2024/zxx # 请确认这是您的公开仓库
+  branch: master       # 请务必在GitHub页面确认分支名是master还是main
+  base_url: https://zhanxx1.de5.net # 重要！与OAuth设置一致
 
-        <div id="errorDetail" class="detail"></div>
-
-        <div id="actionArea">
-            <button id="retryBtn" onclick="window.location.reload(true)">🔄 强制刷新重试</button>
-            <button id="diagnoseBtn" onclick="runDiagnosis()">🔍 显示诊断信息</button>
-        </div>
-        <p style="margin-top: 20px; font-size: 0.9em; color: #888;">
-            提示：如果持续失败，请按F12打开“控制台”查看具体错误。
-        </p>
-    </div>
-
-    <!-- 使用明确版本的库 -->
-    <script src="https://unpkg.com/decap-cms@2.15.0/dist/decap-cms.js"></script>
-
-    <script>
-        // 诊断函数
-        function runDiagnosis() {
-            const detail = document.getElementById('errorDetail');
-            let html = `<strong>诊断报告：</strong><br>`;
-            html += `• CMS 库已定义: ${typeof CMS !== 'undefined' ? '是' : '否'}<br>`;
-            html += `• 当前URL: ${window.location.href}<br>`;
-            html += `• 页面路径: ${window.location.pathname}<br>`;
-            if (typeof CMS === 'undefined') {
-                html += `• 建议: Decap CMS核心脚本未加载。可能原因：<br>&nbsp;&nbsp;- 网络阻止了 unpkg.com<br>&nbsp;&nbsp;- 浏览器扩展拦截了脚本<br>&nbsp;&nbsp;- 请尝试使用VPN或检查开发者工具“网络”面板。`;
-            }
-            detail.innerHTML = html;
-            detail.style.display = 'block';
-        }
-
-        // 主初始化流程
-        function initApp() {
-            const statusLoad = document.getElementById('statusLoad');
-            const statusInit = document.getElementById('statusInit');
-            const statusError = document.getElementById('statusError');
-
-            // 步骤1：检测库
-            if (typeof CMS === 'undefined') {
-                statusLoad.className = 'status error';
-                statusLoad.innerHTML = '❌ 第1步失败：无法加载Decap CMS库。';
-                statusError.style.display = 'block';
-                runDiagnosis(); // 自动诊断
-                return;
-            }
-            statusLoad.className = 'status success';
-            statusLoad.innerHTML = '✅ 第1步完成：CMS库已加载。';
-            console.log('Decap CMS 版本:', CMS.version);
-
-            // 步骤2：初始化配置
-            setTimeout(() => {
-                try {
-                    // 内联配置 - 这是关键！
-                    const config = {
-                        backend: {
-                            name: 'github',
-                            repo: 'zuqiu2024/zxx',
-                            branch: 'master',
-                            base_url: 'https://zhanxx1.de5.net',
-                            auth_scope: 'repo',
-                            api_root: 'https://api.github.com'
-                        },
-                        media_folder: "public/images",
-                        public_folder: "/images",
-                        collections: [{
-                            name: "posts",
-                            label: "文章",
-                            folder: "src/content/posts",
-                            create: true,
-                            slug: "{{slug}}",
-                            fields: [
-                                { label: "标题", name: "title", widget: "string" },
-                                { label: "发布日期", name: "published", widget: "datetime", format: "YYYY-MM-DD" },
-                                { label: "描述", name: "description", widget: "text" },
-                                { label: "标签", name: "tags", widget: "list" },
-                                { label: "封面图片", name: "image", widget: "string" },
-                                { label: "作者", name: "author", widget: "string", default: "展" },
-                                { label: "正文", name: "body", widget: "markdown" }
-                            ]
-                        }]
-                    };
-
-                    CMS.init({ config });
-                    statusInit.className = 'status success';
-                    statusInit.innerHTML = '✅ 第2步完成：CMS已初始化。';
-                    document.getElementById('statusSuccess').style.display = 'block';
-                    console.log('CMS 初始化调用完成。');
-
-                } catch (initError) {
-                    statusInit.className = 'status error';
-                    statusInit.innerHTML = '❌ 第2步失败：初始化时出错。';
-                    statusError.style.display = 'block';
-                    document.getElementById('errorDetail').innerHTML = `初始化错误: ${initError.message}<br>请检查控制台获取详情。`;
-                    document.getElementById('errorDetail').style.display = 'block';
-                    console.error('初始化错误:', initError);
-                }
-            }, 500); // 给库一点准备时间
-        }
-
-        // 启动：先给库5秒加载时间，超时则报错
-        document.addEventListener('DOMContentLoaded', function() {
-            let loadTimeout = setTimeout(() => {
-                if (typeof CMS === 'undefined') {
-                    document.getElementById('statusLoad').className = 'status error';
-                    document.getElementById('statusLoad').innerHTML = '❌ 加载超时：Decap CMS库未在5秒内加载。';
-                    document.getElementById('statusError').style.display = 'block';
-                    runDiagnosis();
-                }
-            }, 5000);
-
-            // 如果库提前加载好，立即初始化
-            if (typeof CMS !== 'undefined') {
-                clearTimeout(loadTimeout);
-                initApp();
-            } else {
-                // 监听库的加载
-                const checkLib = setInterval(() => {
-                    if (typeof CMS !== 'undefined') {
-                        clearInterval(checkLib);
-                        clearTimeout(loadTimeout);
-                        initApp();
-                    }
-                }, 100);
-            }
-        });
-    </script>
-</body>
-</html>
+media_folder: "public/images"
+public_folder: "/images"
+collections:
+  # ... 您的集合配置可以暂时简化，先确保能登录
+  - name: "posts"
+    label: "文章"
+    folder: "src/content/posts"
+    fields:
+      - {label: "标题", name: "title", widget: "string"}
+      - {label: "正文", name: "body", widget: "markdown"}
