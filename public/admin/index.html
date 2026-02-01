@@ -4,71 +4,66 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
+    <!-- 关键：尝试放宽CSP以允许CMS运行（如果Cloudflare默认策略过严） -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://unpkg.com https://api.github.com https://zhanxx1.de5.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; connect-src 'self' https://api.github.com https://unpkg.com https://zhanxx1.de5.net; frame-src 'self' https://zhanxx1.de5.net;">
     <title>博客内容管理后台</title>
-    <!-- 1. 引入 Decap CMS -->
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-    <!-- 2. 将配置直接内嵌在页面中，这是最可靠的方式 -->
-    <script>
-        // 重要：在 CMS 脚本加载前，将配置写入全局变量
-        window.CMS_CONFIG = {
-            backend: {
-                name: "github",
-                repo: "zuqiu2024/zxx", // 你的仓库
-                branch: "master",       // 请再次确认分支名
-                base_url: "https://zhanxx1.de5.net", // 必须与GitHub OAuth设置一致
-                auth_scope: "repo",     // 请求的权限
-                api_root: "https://api.github.com"
-            },
-            media_folder: "public/images",
-            public_folder: "/images",
-            collections: [
-                {
-                    name: "posts",
-                    label: "文章",
-                    folder: "src/content/posts",
-                    create: true,
-                    slug: "{{slug}}",
-                    fields: [
-                        { label: "标题", name: "title", widget: "string" },
-                        { label: "发布日期", name: "published", widget: "datetime", format: "YYYY-MM-DD" },
-                        { label: "描述", name: "description", widget: "text" },
-                        { label: "标签", name: "tags", widget: "list" },
-                        { label: "封面图片", name: "image", widget: "string" },
-                        { label: "作者", name: "author", widget: "string", default: "展" },
-                        { label: "正文", name: "body", widget: "markdown" }
-                    ]
-                }
-            ]
-        };
-        // 3. 当CMS库加载后，自动使用上述配置初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof CMS !== 'undefined') {
-                CMS.init({ config: window.CMS_CONFIG });
-                console.log('CMS已使用内嵌配置初始化。');
-            }
-        });
-    </script>
+    
+    <!-- 使用一个具体的稳定版本，避免 ^ 符号可能带来的问题 -->
+    <script src="https://unpkg.com/decap-cms@2.15.0/dist/decap-cms.js"></script>
+    
+    <!-- 通过独立的 script 标签加载外部 config.yml -->
+    <script src="config.yml" type="text/yaml"></script>
+    
     <style>
-        /* 可选：添加一个加载提示 */
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; }
-        #loading { padding: 40px; text-align: center; color: #666; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafafa;
+        }
+        #loading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <!-- 4. 加载提示（CMS加载成功后会被替换） -->
-    <div id="loading">
-        <p>正在加载内容管理器...</p>
-    </div>
-    <!-- 5. CMS的挂载点 -->
+    <div id="loading">正在加载内容管理器...</div>
     <div id="nc-root"></div>
+
     <script>
-        // 可选：加载成功后隐藏提示
-        setTimeout(function() {
-            var loadingEl = document.getElementById('loading');
-            if (loadingEl && document.getElementById('nc-root').children.length > 0) {
-                loadingEl.style.display = 'none';
-            }
-        }, 2000);
+        // 极简初始化：等待CMS库和配置文件就绪
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM已就绪，等待初始化...');
+            
+            // 使用一个小技巧：如果CMS和配置都已加载，它会自动初始化。
+            // 我们只需要确保它们被成功引入。
+            // 设置一个超时检查，如果5秒后还是加载状态，提示用户。
+            setTimeout(function() {
+                var loadingEl = document.getElementById('loading');
+                var rootEl = document.getElementById('nc-root');
+                if (loadingEl && rootEl && rootEl.children.length === 0) {
+                    // 页面仍然卡住，显示错误和手动初始化按钮
+                    loadingEl.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <h3>界面加载似乎卡住了</h3>
+                            <p>可能的原因：网络、配置或浏览器扩展问题。</p>
+                            <button onclick="window.location.reload()" style="padding: 10px 20px; margin: 10px;">刷新页面</button>
+                            <p style="margin-top: 20px; font-size: 12px; color: #666;">
+                                如果多次刷新无效，请按F12打开“控制台”(Console)查看具体错误。
+                            </p>
+                        </div>
+                    `;
+                    console.warn('CMS自动初始化可能失败，请检查网络和控制台错误。');
+                }
+            }, 5000); // 等待5秒
+        });
     </script>
 </body>
 </html>
