@@ -1,9 +1,8 @@
 backend:
   name: github
-  repo: zuqiu2024/zxx  # 你的主博客仓库
-  branch: master
-  base_url: https://zhanxx1.de5.net  # 重要！部署后需更新
-  auth_endpoint: /api/auth
+  repo: zuqiu2024/zxx  # 你的GitHub仓库
+  branch: main         # 请确认你的仓库默认分支是 `main` 还是 `master`
+  use_git_gateway: false # ⭐ 核心：启用客户端隐式授权，无需服务器
 
 media_folder: "public/images"
 public_folder: "/images"
