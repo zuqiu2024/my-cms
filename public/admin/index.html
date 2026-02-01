@@ -1,16 +1,21 @@
-backend:
-  name: github
-  repo: zuqiu2024/zxx # 请确认这是您的公开仓库
-  branch: master       # 请务必在GitHub页面确认分支名是master还是main
-  base_url: https://zhanxx1.de5.net # 重要！与OAuth设置一致
-
-media_folder: "public/images"
-public_folder: "/images"
-collections:
-  # ... 您的集合配置可以暂时简化，先确保能登录
-  - name: "posts"
-    label: "文章"
-    folder: "src/content/posts"
-    fields:
-      - {label: "标题", name: "title", widget: "string"}
-      - {label: "正文", name: "body", widget: "markdown"}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容管理</title>
+    <!-- 使用官方CDN -->
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+</head>
+<body>
+    <div id="nc-root"></div>
+    <script>
+        // 纯静态GitHub后端标准初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.CMS) {
+                CMS.init();
+            }
+        });
+    </script>
+</body>
+</html>
