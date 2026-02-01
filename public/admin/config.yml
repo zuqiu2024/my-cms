@@ -1,8 +1,9 @@
 backend:
   name: github
-  repo: zuqiu2024/zxx  # 你的GitHub仓库
-  branch: main         # 请确认你的仓库默认分支是 `main` 还是 `master`
-  use_git_gateway: false # ⭐ 核心：启用客户端隐式授权，无需服务器
+  repo: zuqiu2024/zxx
+  branch: master  # ⚠️ 请务必确认是 `master` 还是 `main`，必须与仓库默认分支一致！
+  use_git_gateway: false
+  base_url: https://zhanxx1.de5.net  # 🚨 **必须添加！** 指向你的管理员站点
 
 media_folder: "public/images"
 public_folder: "/images"
@@ -20,4 +21,4 @@ collections:
       - { label: "标签", name: "tags", widget: "list" }
       - { label: "封面图片", name: "image", widget: "string" }
       - { label: "作者", name: "author", widget: "string", default: "展" }
-      - { label: "正文", name: "body", widget: "markdown" }
+      - { label: "正文", name: “body", widget: "markdown" }
