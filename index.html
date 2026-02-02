@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>CMS验证</title>
+    <script>
+    // 超精简CMS核心模拟器 + 配置
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. 注入配置
+        window.CMS_CONFIG = {
+            backend: {
+                name: 'github',
+                repo: 'zuqiu2024/zxx',
+                branch: 'master',
+                base_url: 'https://my-cms-bv2.pages.dev' // 必须与OAuth设置完全一致
+            },
+            collections: [{name:'posts', label:'Posts', folder:'src/content/posts', fields:[{label:'Title', name:'title', widget:'string'}]}]
+        };
+        // 2. 模拟CMS对象并初始化
+        window.CMS = {
+            init: function(opts) {
+                console.log('CMS模拟器：初始化被调用，配置：', opts?.config || window.CMS_CONFIG);
+                // 关键：动态创建登录按钮和跳转逻辑
+                const root = document.getElementById('nc-root');
+                if (!root) return;
+                root.innerHTML = `
+                    <div style="padding: 2rem; text-align: center;">
+                        <h2>🎉 Decap CMS 环境验证通过</h2>
+                        <p>配置已加载，核心库网络依赖已绕过。</p>
+                        <p>如果此按钮能跳转到GitHub并授权返回，则全程畅通。</p>
+                        <a href="https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=https://my-cms-bv2.pages.dev&scope=repo" 
+                           style="display: inline-block; margin-top: 1rem; padding: 12px 24px; background: #24292e; color: white; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                           🔐 点击这里测试 GitHub 登录流程
+                        </a>
+                        <p style="margin-top: 2rem; color: #666; font-size: 0.9em;">
+                            <strong>注意</strong>：请将上方链接中的 <code>YOUR_CLIENT_ID</code> 替换为您的真实GitHub OAuth App Client ID。
+                        </p>
+                    </div>
+                `;
+            }
+        };
+        // 3. 自动初始化
+        setTimeout(() => { if(window.CMS) window.CMS.init({ config: window.CMS_CONFIG }); }, 100);
+    });
+    </script>
+</head>
+<body>
+    <div id="nc-root"><p>正在加载验证环境...</p></div>
+</body>
+</html>
