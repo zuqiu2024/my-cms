@@ -1,25 +1,170 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
-    <title>内容管理器</title>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容管理器 - 诊断模式</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f5f5f5; }
+        #status { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #ccc; }
+        .step.pending { border-color: #ccc; color: #666; }
+        .step.running { border-color: #2196F3; color: #2196F3; }
+        .step.success { border-color: #4CAF50; color: #4CAF50; }
+        .step.error { border-color: #f44336; color: #f44336; }
+        #diagnostic { background: #fffde7; padding: 15px; border-radius: 5px; margin-top: 20px; display: none; }
+        button { padding: 10px 15px; margin: 5px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+    <!-- 使用一个确定的版本，避免 ^ 符号可能产生的问题 -->
+    <script src="https://unpkg.com/decap-cms@3.3.0/dist/decap-cms.js"></script>
 </head>
 <body>
-    <!-- CMS 将在此处渲染 -->
+    <h2>Decap CMS 诊断面板</h2>
+    <div id="status">
+        <div id="step1" class="step pending">1. 等待加载 Decap CMS 库...</div>
+        <div id="step2" class="step pending">2. 准备初始化配置...</div>
+        <div id="step3" class="step pending">3. 执行初始化...</div>
+        <div id="step4" class="step pending">4. 等待界面渲染...</div>
+    </div>
+
+    <div id="action">
+        <button onclick="forceInit()">🚀 强制尝试初始化</button>
+        <button onclick="showDiagnostic()">🔍 显示诊断信息</button>
+        <button onclick="location.reload(true)">🔄 彻底刷新页面</button>
+    </div>
+
+    <div id="diagnostic">
+        <h4>诊断信息：</h4>
+        <pre id="diagnosticInfo"></pre>
+    </div>
+
+    <!-- CMS 挂载点 -->
     <div id="nc-root"></div>
-    
+
     <script>
-        // 等待CMS库加载后，使用您的 config.yml 初始化
+        // 更新步骤状态
+        function updateStep(stepId, status, message) {
+            const step = document.getElementById(stepId);
+            step.className = `step ${status}`;
+            if (message) step.innerHTML = `${stepId}. ${message}`;
+            console.log(`步骤 ${stepId}: ${status} - ${message || ''}`);
+        }
+
+        // 收集诊断信息
+        function collectDiagnostic() {
+            let info = `当前时间: ${new Date().toLocaleString()}\n`;
+            info += `当前URL: ${window.location.href}\n`;
+            info += `userAgent: ${navigator.userAgent}\n`;
+            info += `CMS 库已定义: ${typeof CMS !== 'undefined' ? '是' : '否'}\n`;
+            if (typeof CMS !== 'undefined') {
+                info += `CMS 版本: ${CMS.version || '未知'}\n`;
+            }
+            info += `nc-root 子元素数量: ${document.getElementById('nc-root').children.length}\n`;
+            return info;
+        }
+
+        // 显示诊断
+        function showDiagnostic() {
+            document.getElementById('diagnosticInfo').textContent = collectDiagnostic();
+            document.getElementById('diagnostic').style.display = 'block';
+        }
+
+        // 您的配置（内嵌，避免任何外部文件依赖）
+        const cmsConfig = {
+            backend: {
+                name: 'github',
+                repo: 'zuqiu2024/zxx',
+                branch: 'master',
+                base_url: 'https://zhanxx1.de5.net', // 必须与GitHub OAuth设置完全一致
+                auth_scope: 'repo',
+                api_root: 'https://api.github.com'
+            },
+            media_folder: 'public/images',
+            public_folder: '/images',
+            collections: [
+                {
+                    name: 'posts',
+                    label: '文章',
+                    folder: 'src/content/posts',
+                    fields: [
+                        { label: '标题', name: 'title', widget: 'string' },
+                        { label: '正文', name: 'body', widget: 'markdown' }
+                    ]
+                }
+            ]
+        };
+
+        // 主初始化函数
+        function initCMS() {
+            updateStep('step2', 'running', '正在准备配置...');
+            
+            setTimeout(() => {
+                updateStep('step3', 'running', '正在调用 CMS.init()...');
+                try {
+                    // 关键：调用初始化
+                    CMS.init({ config: cmsConfig });
+                    updateStep('step3', 'success', '初始化调用成功！');
+                    updateStep('step4', 'running', '等待界面渲染（约5秒）...');
+                    
+                    // 检查5秒后是否渲染出内容
+                    setTimeout(() => {
+                        const root = document.getElementById('nc-root');
+                        if (root && root.children.length > 0) {
+                            updateStep('step4', 'success', '界面已渲染！');
+                            document.getElementById('status').style.backgroundColor = '#e8f5e9';
+                        } else {
+                            updateStep('step4', 'error', '超时：未检测到渲染的界面。');
+                            showDiagnostic();
+                        }
+                    }, 5000);
+                    
+                } catch (err) {
+                    updateStep('step3', 'error', `初始化异常: ${err.message}`);
+                    console.error('CMS.init 错误:', err);
+                    showDiagnostic();
+                }
+            }, 500);
+        }
+
+        // 强制初始化（手动触发）
+        window.forceInit = function() {
+            if (typeof CMS === 'undefined') {
+                alert('CMS 库尚未加载，请等待或刷新。');
+                return;
+            }
+            initCMS();
+        };
+
+        // 页面加载逻辑
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.CMS) {
-                // 这将自动加载同目录下的 config.yml 文件
-                CMS.init();
-                console.log('Decap CMS 已初始化。');
-            } else {
-                console.error('CMS 库未加载。');
+            updateStep('step1', 'running', '正在检测 CMS 库...');
+            
+            let loadCheckInterval = setInterval(() => {
+                if (typeof CMS !== 'undefined') {
+                    clearInterval(loadCheckInterval);
+                    updateStep('step1', 'success', 'CMS 库已加载。');
+                    // 自动开始初始化
+                    initCMS();
+                }
+            }, 100);
+
+            // 8秒后如果库还没加载，则报错
+            setTimeout(() => {
+                if (typeof CMS === 'undefined') {
+                    clearInterval(loadCheckInterval);
+                    updateStep('step1', 'error', '加载超时：CMS库未加载。可能被网络或浏览器扩展阻止。');
+                    showDiagnostic();
+                }
+            }, 8000);
+        });
+
+        // 全局错误捕获（备用）
+        window.addEventListener('error', function(event) {
+            console.error('全局错误:', event.error);
+            const diagnostic = document.getElementById('diagnosticInfo');
+            if (diagnostic) {
+                diagnostic.textContent += `\n全局错误: ${event.message} (${event.filename}:${event.lineno})`;
+                document.getElementById('diagnostic').style.display = 'block';
             }
         });
     </script>
