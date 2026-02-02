@@ -1,13 +1,27 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>Content Manager</title>
-  </head>
-  <body>
-    <!-- Include the script that builds the page and powers Decap CMS -->
+    <title>内容管理器</title>
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-  </body>
+</head>
+<body>
+    <!-- CMS 将在此处渲染 -->
+    <div id="nc-root"></div>
+    
+    <script>
+        // 等待CMS库加载后，使用您的 config.yml 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.CMS) {
+                // 这将自动加载同目录下的 config.yml 文件
+                CMS.init();
+                console.log('Decap CMS 已初始化。');
+            } else {
+                console.error('CMS 库未加载。');
+            }
+        });
+    </script>
+</body>
 </html>
