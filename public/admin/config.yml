@@ -1,7 +1,7 @@
 backend:
   name: github
-  repo: 你的GitHub用户名/你的博客仓库名
-  branch: main
+  repo: zuqiu2024/zxx
+  branch: master
   base_url: https://zhanxx1.de5.net
   auth_endpoint: /api/auth
 
